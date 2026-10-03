@@ -3,7 +3,9 @@ __pycache__/
 *.pyo
 .env
 .venv
+.venv_win/
 venv/
+venv_linux_backup/
 env/
 *.egg-info/
 dist/
@@ -12,6 +14,8 @@ build/
 .coverage
 htmlcov/
 *.log
+logs/
 *.sqlite3
 private.pem
 public.pem
+app/static/uploads/

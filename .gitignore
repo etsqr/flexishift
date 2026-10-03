@@ -1,0 +1,47 @@
+# Python / venvs
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/.venv_win/
+**/venv/
+**/venv_linux_backup/
+**/env/
+**/*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+!mobile/android/app/src/main/res/raw/freightflex_server.pem
+private.pem
+public.pem
+
+# Node
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# Logs & runtime
+**/logs/
+*.log
+backend/app/static/uploads/
+backend/app/static/uploads/**
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sw?
+
+# Local tooling
+D:/temp_pip/
+D:/pip_cache/
+D:/npm_cache/

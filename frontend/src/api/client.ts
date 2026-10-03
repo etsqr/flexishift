@@ -3,10 +3,9 @@ import axios from 'axios';
 const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
 
 const normalizeBaseUrl = (value?: string) => {
+  // Always local — never fall back to a remote host
   if (!value) {
-    return import.meta.env.PROD
-      ? 'https://freightflex.indian-merchant-navy.com/api/v1'
-      : 'http://localhost:8000/api/v1';
+    return 'http://localhost:8010/api/v1';
   }
 
   const normalized = value.replace(/\/+$/, '');

@@ -5,22 +5,21 @@ type ApiEnv = 'local' | 'dev' | 'prod';
 const API_ENV: ApiEnv = 'local';
 
 // 10.0.2.2 = host machine's localhost as seen from the Android emulator.
-// On a physical device use `adb reverse tcp:8000 tcp:8000` so localhost maps to your PC,
-// or set LOCAL to your machine's LAN IP (e.g. http://192.168.1.50:8000).
-const isEmulator = false; // set false when running local backend on a physical device
-const LOCAL = isEmulator ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+// On a physical device use `adb reverse tcp:8010 tcp:8010` so localhost maps to your PC,
+// or set LOCAL to your machine's LAN IP (e.g. http://192.168.1.50:8010).
+const isEmulator = true; // Android emulator → host machine; set false for physical device + adb reverse
+// Port 8010 — local Freightflex API (do not point at remote hosts while developing)
+const LOCAL = isEmulator ? 'http://10.0.2.2:8010' : 'http://localhost:8010';
 
-// Deployed dev/staging API.
-const DEV = 'https://api.flexishift.io';
-
-// Production API.
-const PROD = 'https://api.flexishift.io';
+// Kept as local so nothing accidentally calls the remote server
+const DEV = LOCAL;
+const PROD = LOCAL;
 
 const ORIGINS: Record<ApiEnv, string> = {local: LOCAL, dev: DEV, prod: PROD};
 
-export const API_ORIGIN = (__DEV__ ? ORIGINS[API_ENV] : PROD).replace(/\/+$/, '');
+export const API_ORIGIN = ORIGINS[API_ENV].replace(/\/+$/, '');
 export const API_BASE_URL = `${API_ORIGIN}/api/v1`;
 export const WS_BASE_URL = API_ORIGIN.replace(/^https/, 'ws').replace(/^http/, 'ws');
 
-// Same key as AndroidManifest — not a secret (ships inside the APK)
-export const GOOGLE_MAPS_API_KEY = 'AIzaSyAL89oi-v795KLD1l3lDYGhK6R7X77ZvTs';
+// Same key as AndroidManifest — set when you have a local/dev Maps key
+export const GOOGLE_MAPS_API_KEY = '';
