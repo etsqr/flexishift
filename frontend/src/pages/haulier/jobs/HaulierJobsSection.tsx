@@ -947,18 +947,77 @@ const DriverRatingModal: React.FC<DriverRatingModalProps> = ({ jobId, driverId, 
   );
 };
 
-/* ── Stroke Signature Renderer ─────────────────────────────────────────────── */
+/* ── Stroke Signature Renderer ───────────────────────────────────────────────
+ *
+ * Renders recipientSignatureUrl from GET /compliance/delivery/status/{jobId}.
+ * Despite the field name, the value is often JSON stroke data (not an image URL).
+ *
+ * Supported payload shapes (must detect before calling .reduce):
+ *   1. Web canvas strokes:     [[{x,y}, ...], ...]
+ *   2. Mobile delivery proof:  [{x1,y1,x2,y2}, ...]   ← each item is a line segment object
+ *   3. Flat point list:        [{x,y}, ...]
+ *   4. Image / data URL:       non-JSON string, or JSON that is not an array
+ *
+ * Bug history: treating (2) as (1) called .reduce on a segment object and threw
+ * "e.reduce is not a function" on haulier Review delivery.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
+/** One point in a web canvas stroke. */
 type StrokePoint = { x: number; y: number };
 
+/** One line segment as saved by the mobile delivery-proof signature pad. */
+type SignatureSegment = { x1: number; y1: number; x2: number; y2: number };
+
 const StrokeSignature: React.FC<{ data: string; className?: string }> = ({ data, className }) => {
-  let strokes: StrokePoint[][] = [];
+  let paths: string[] = [];
+  // When true, render <img> instead of SVG (data is a URL / data-URI / unrecognised JSON).
   let isUrl = false;
+
   try {
     const parsed = JSON.parse(data);
-    if (Array.isArray(parsed)) strokes = parsed as StrokePoint[][];
-    else isUrl = true;
+
+    if (!Array.isArray(parsed)) {
+      // Parsed JSON but not stroke data (e.g. wrapped object) — fall back to <img>.
+      isUrl = true;
+    } else if (parsed.length === 0) {
+      // Empty signature payload — render empty SVG.
+    } else if (Array.isArray(parsed[0])) {
+      // Web: array of strokes; each stroke is an array of {x,y} points → one SVG path per stroke.
+      const strokes = parsed as StrokePoint[][];
+      paths = strokes.map((stroke) =>
+        !Array.isArray(stroke) || stroke.length < 2
+          ? ''
+          : stroke.reduce((acc, pt, i) => acc + (i === 0 ? `M${pt.x},${pt.y}` : ` L${pt.x},${pt.y}`), ''),
+      ).filter(Boolean);
+    } else if (
+      parsed[0]
+      && typeof parsed[0] === 'object'
+      && 'x1' in (parsed[0] as object)
+      && 'y1' in (parsed[0] as object)
+      && 'x2' in (parsed[0] as object)
+      && 'y2' in (parsed[0] as object)
+    ) {
+      // Mobile: array of segments. Do NOT .reduce the segment object — map each to M…L….
+      paths = (parsed as SignatureSegment[]).map(
+        (seg) => `M${seg.x1},${seg.y1} L${seg.x2},${seg.y2}`,
+      );
+    } else if (
+      parsed[0]
+      && typeof parsed[0] === 'object'
+      && 'x' in (parsed[0] as object)
+      && 'y' in (parsed[0] as object)
+    ) {
+      // Single continuous stroke stored as a flat list of points.
+      const pts = parsed as StrokePoint[];
+      paths = pts.length < 2
+        ? []
+        : [pts.reduce((acc, pt, i) => acc + (i === 0 ? `M${pt.x},${pt.y}` : ` L${pt.x},${pt.y}`), '')];
+    } else {
+      // Unrecognised array shape — treat original string as image src.
+      isUrl = true;
+    }
   } catch {
+    // Not JSON (http(s) URL, data:image/…, etc.) — render as <img>.
     isUrl = true;
   }
 
@@ -966,13 +1025,9 @@ const StrokeSignature: React.FC<{ data: string; className?: string }> = ({ data,
     return <img src={data} alt="Recipient signature" className={`object-contain ${className ?? ''}`} />;
   }
 
+  // SVG canvas size used by web/mobile signature pads (coordinates are in this space).
   const W = 300;
   const H = 120;
-  const paths = strokes.map((stroke) =>
-    stroke.length < 2
-      ? ''
-      : stroke.reduce((acc, pt, i) => acc + (i === 0 ? `M${pt.x},${pt.y}` : ` L${pt.x},${pt.y}`), '')
-  ).filter(Boolean);
 
   return (
     <svg
