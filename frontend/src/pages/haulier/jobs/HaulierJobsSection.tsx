@@ -1152,7 +1152,7 @@ const DeliveryReviewPanel: React.FC<DeliveryReviewPanelProps> = ({
       {/* ── Release Payment Confirmation Modal ── */}
       <ConfirmModal
         open={showReleaseConfirm}
-        title="Approve Delivery &amp; Release Payment"
+        title="Approve Delivery & Release Payment"
         message={`You are about to approve delivery for job ${jobRef} and release the escrowed funds to the driver.`}
         details={[
           { label: 'Job Ref', value: jobRef },
